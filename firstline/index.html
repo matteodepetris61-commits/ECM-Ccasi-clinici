@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulatore ECM — Acalabrutinib First-Line LLC · 2026</title>
+<style>
+  :root {
+    --navy: #0f2744;
+    --navy-mid: #1a3a5c;
+    --navy-light: #e8f0f8;
+    --teal: #0d7a6b;
+    --teal-light: #e0f5f2;
+    --amber: #b45309;
+    --amber-light: #fef3c7;
+    --red-light: #fef2f2;
+    --red: #b91c1c;
+    --green-light: #f0fdf4;
+    --green: #166534;
+    --purple: #6d28d9;
+    --purple-light: #ede9fe;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-600: #475569;
+    --gray-800: #1e293b;
+    --white: #ffffff;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--gray-50);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 3px solid var(--teal);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-badges { display: flex; gap: 6px; margin-bottom: 4px; }
+  .badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .badge-ecm { background: var(--teal); color: white; }
+  .badge-ai { background: rgba(255,255,255,.15); color: white; border: 1px solid rgba(255,255,255,.3); }
+  .badge-new { background: #dc2626; color: white; }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  .header p { font-size: 11px; opacity: .6; margin-top: 2px; }
+  .header-right {
+    margin-left: auto;
+    text-align: right;
+    font-size: 10px;
+    opacity: .55;
+    line-height: 1.7;
+  }
+
+  /* LAYOUT */
+  .main {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 68px);
+  }
+
+  /* LEFT PANEL */
+  .panel-left {
+    background: white;
+    border-right: 1px solid var(--gray-200);
+    padding: 20px 16px;
+    overflow-y: auto;
+    height: calc(100vh - 68px);
+    position: sticky;
+    top: 68px;
+  }
+
+  .patient-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .patient-avatar {
+    width: 48px; height: 48px;
+    background: var(--navy-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    border: 2px solid var(--navy);
+    flex-shrink: 0;
+  }
+  .patient-name { font-size: 17px; font-weight: 700; color: var(--navy); letter-spacing: -.02em; }
+  .patient-meta { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+
+  .alert-box {
+    background: var(--amber-light);
+    border: 1px solid #fcd34d;
+    border-left: 4px solid var(--amber);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 12px 0;
+    font-size: 12px;
+    color: var(--amber);
+    font-weight: 500;
+    display: flex; gap: 8px;
+  }
+
+  .section-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin: 16px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    font-size: 12px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--gray-600); flex-shrink: 0; }
+  .info-value { font-weight: 600; color: var(--gray-800); text-align: right; max-width: 55%; font-size: 12px; }
+  .info-value.danger { color: var(--red); }
+  .info-value.warn { color: var(--amber); }
+  .info-value.ok { color: var(--teal); }
+
+  .drug-badge {
+    display: inline-block;
+    background: var(--teal-light);
+    color: var(--teal);
+    border: 1px solid #99e6de;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    margin: 2px 2px 2px 0;
+  }
+
+  .evidence-pill {
+    display: inline-block;
+    background: var(--navy-light);
+    color: var(--navy);
+    border-radius: 4px;
+    font-size: 9px;
+    padding: 2px 6px;
+    margin: 2px 2px 0 0;
+    font-weight: 600;
+  }
+
+  .evidence-highlight {
+    background: var(--purple-light);
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0 0;
+    font-size: 11px;
+    color: var(--purple);
+  }
+  .evidence-highlight strong { display: block; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* RIGHT PANEL */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 68px);
+    position: sticky;
+    top: 68px;
+  }
+
+  /* STEP NAV */
+  .step-nav {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 10px 20px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .step-btn {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .step-btn:hover { background: var(--navy-light); color: var(--navy); }
+  .step-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+  .step-btn.done { background: var(--teal-light); color: var(--teal); border-color: #99e6de; }
+
+  /* CHAT */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background: var(--gray-50);
+  }
+
+  .msg { line-height: 1.6; font-size: 13.5px; }
+  .msg.system {
+    max-width: 100%;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .msg-header {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .msg.user {
+    align-self: flex-end;
+    max-width: 78%;
+    background: var(--navy);
+    color: white;
+    border-radius: 14px 14px 2px 14px;
+    padding: 11px 15px;
+  }
+  .msg.ai {
+    align-self: flex-start;
+    max-width: 84%;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 2px 14px 14px 14px;
+    padding: 14px 16px;
+  }
+  .ai-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ai-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--teal);
+    border-radius: 50%;
+  }
+
+  .feedback-correct {
+    background: var(--green-light);
+    border: 1px solid #86efac;
+    border-left: 4px solid var(--green);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--green);
+  }
+  .feedback-partial {
+    background: var(--amber-light);
+    border: 1px solid #fcd34d;
+    border-left: 4px solid var(--amber);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--amber);
+  }
+  .feedback-wrong {
+    background: var(--red-light);
+    border: 1px solid #fca5a5;
+    border-left: 4px solid var(--red);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--red);
+  }
+
+  .guideline-ref {
+    background: var(--navy-light);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--navy-mid);
+    border-left: 3px solid var(--navy);
+  }
+
+  .typing-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--gray-400);
+    border-radius: 50%;
+    animation: bounce .9s infinite;
+    margin: 0 1px;
+  }
+  .typing-dot:nth-child(2) { animation-delay: .15s; }
+  .typing-dot:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+  }
+
+  /* INPUT */
+  .input-area {
+    background: white;
+    border-top: 1px solid var(--gray-200);
+    padding: 14px 20px;
+  }
+  .input-hint {
+    font-size: 10px;
+    color: var(--gray-400);
+    margin-bottom: 7px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .input-row { display: flex; gap: 8px; align-items: flex-end; }
+  .input-row textarea {
+    flex: 1;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--gray-800);
+    resize: none;
+    min-height: 42px;
+    max-height: 110px;
+    line-height: 1.5;
+    transition: border-color .15s;
+    background: var(--gray-50);
+  }
+  .input-row textarea:focus { outline: none; border-color: var(--navy); background: white; }
+  .send-btn {
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    width: 42px; height: 42px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .send-btn:hover { background: var(--navy-mid); }
+  .send-btn:disabled { background: var(--gray-400); cursor: not-allowed; }
+
+  .quick-replies { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .qr-chip {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 5px 11px;
+    font-size: 11px;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all .12s;
+    white-space: nowrap;
+  }
+  .qr-chip:hover { background: var(--navy-light); color: var(--navy); border-color: var(--navy); }
+
+  .score-bar { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .score-item {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .score-item.ok { background: var(--green-light); color: var(--green); }
+  .score-item.warn { background: var(--amber-light); color: var(--amber); }
+  .score-item.ko { background: var(--red-light); color: var(--red); }
+  .score-item.info { background: var(--purple-light); color: var(--purple); }
+
+  .sources-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,.45);
+    font-size: 9px;
+    padding: 7px 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .sources-footer a { color: rgba(255,255,255,.6); text-decoration: none; }
+  .sources-footer a:hover { color: white; }
+
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; }
+    .panel-left { display: none; }
+    .panel-right { height: calc(100vh - 68px); position: static; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-badges">
+      <span class="badge badge-ecm">ECM Simulator</span>
+      <span class="badge badge-ai">AI-Powered</span>
+      <span class="badge badge-new">Dati 2026</span>
+    </div>
+    <h1>Acalabrutinib First-Line nella LLC — Scelta ed Ottimizzazione Terapeutica</h1>
+    <p>Simulatore di percorso clinico · Paziente gemello digitale · Evidenze aggiornate 2025–2026</p>
+  </div>
+  <div class="header-right">
+    ELEVATE-TN 6y · NAOS 2025 · NMA JNCI 2025<br>
+    Duminuco 2026 · iwCLL 2023 · EHA 2024
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT: SCHEDA PAZIENTE -->
+  <div class="panel-left">
+
+    <div class="patient-header">
+      <div class="patient-avatar">🧑‍⚕️</div>
+      <div>
+        <div class="patient-name">Giuseppe F., 69 anni</div>
+        <div class="patient-meta">Maschio · Pensionato ex-insegnante · Bergamo</div>
+      </div>
+    </div>
+
+    <div class="alert-box">
+      <span style="font-size:15px;flex-shrink:0">📋</span>
+      <div>Prima valutazione ematologica: LLC diagnosticata 3 mesi fa, fino ad ora in watch &amp; wait. Ora soddisfa i criteri iwCLL per l'inizio della terapia.</div>
+    </div>
+
+    <div class="section-label">Diagnosi e Stadiazione</div>
+    <div class="info-row"><span class="info-label">Diagnosi</span><span class="info-value">LLC B, Rai stadio II</span></div>
+    <div class="info-row"><span class="info-label">IGHV mutazionale</span><span class="info-value danger">Non mutato (UM-IGHV)</span></div>
+    <div class="info-row"><span class="info-label">del(17p) / TP53</span><span class="info-value ok">Neg / Wild-type</span></div>
+    <div class="info-row"><span class="info-label">del(11q)</span><span class="info-value warn">Positiva</span></div>
+    <div class="info-row"><span class="info-label">Criteri iwCLL</span><span class="info-value danger">Soddisfatti (anemia, splenomegalia)</span></div>
+
+    <div class="section-label">Terapia Precedente</div>
+    <div style="padding:4px 0; font-size:12px; color:var(--gray-600)">Nessuna (paziente naïve al trattamento)</div>
+
+    <div class="section-label">Comorbidità</div>
+    <div class="info-row"><span class="info-label">Cardiovascolare</span><span class="info-value warn">Ipertensione grado 1</span></div>
+    <div class="info-row"><span class="info-label">FA pregressa</span><span class="info-value ok">No</span></div>
+    <div class="info-row"><span class="info-label">Funzione renale</span><span class="info-value">GFR 72 ml/min</span></div>
+    <div class="info-row"><span class="info-label">Funzione epatica</span><span class="info-value ok">Nella norma</span></div>
+    <div class="info-row"><span class="info-label">CIRS-G score</span><span class="info-value warn">8 (comorbidità cumulate)</span></div>
+
+    <div class="section-label">Esami Ematici Recenti</div>
+    <div class="info-row"><span class="info-label">Hb</span><span class="info-value warn">10.4 g/dL</span></div>
+    <div class="info-row"><span class="info-label">PLT</span><span class="info-value">138 × 10³/μL</span></div>
+    <div class="info-row"><span class="info-label">Linfociti</span><span class="info-value danger">48.2 × 10³/μL</span></div>
+    <div class="info-row"><span class="info-label">β2-micro</span><span class="info-value danger">4.1 mg/L (alto)</span></div>
+    <div class="info-row"><span class="info-label">Splenomegalia</span><span class="info-value warn">Eco: 16 cm</span></div>
+
+    <div class="section-label">Evidenza Chiave 2025–2026</div>
+    <div class="evidence-highlight">
+      <strong>🔬 ELEVATE-TN · 6 anni follow-up (Blood 2025)</strong>
+      Acalabrutinib + obinutuzumab: PFS e OS superiori alla chemioimmunot. in tutte le categorie di rischio, incluso UM-IGHV e del(11q).
+    </div>
+    <div class="evidence-highlight" style="margin-top:8px">
+      <strong>📊 NMA · JNCI 2025 (30 trial, 12.818 pz)</strong>
+      Nei pazienti >65 anni o UM-IGHV: acalabrutinib ha vantaggio di PFS rispetto a ibrutinib e ven-obi.
+    </div>
+
+    <div class="section-label">Fonti Bibliografiche</div>
+    <span class="evidence-pill">ELEVATE-TN 6y 2025</span>
+    <span class="evidence-pill">NMA JNCI 2025</span>
+    <span class="evidence-pill">NAOS France 2025</span>
+    <span class="evidence-pill">Duminuco 2026</span>
+    <span class="evidence-pill">ARISE Italy</span>
+    <span class="evidence-pill">iwCLL 2023</span>
+
+  </div>
+
+  <!-- RIGHT: CHAT SIMULATOR -->
+  <div class="panel-right">
+
+    <div class="step-nav">
+      <button class="step-btn active" onclick="setStep(1, this)" id="step1-btn">1 · Indicazione al trattamento</button>
+      <button class="step-btn" onclick="setStep(2, this)" id="step2-btn">2 · Scelta del regime</button>
+      <button class="step-btn" onclick="setStep(3, this)" id="step3-btn">3 · Acala ± obinutuzumab</button>
+      <button class="step-btn" onclick="setStep(4, this)" id="step4-btn">4 · Gestione early tox</button>
+      <button class="step-btn" onclick="setStep(5, this)" id="step5-btn">5 · Valutazione risposta</button>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="msg system">
+        <div class="msg-header">📋 Presentazione del caso — Prima visita</div>
+        <p style="margin-bottom:10px">
+          <strong>Giuseppe F., 69 anni</strong>, vi viene inviato dall'internista per diagnosi di LLC effettuata 3 mesi fa durante accertamenti per astenia progressiva e splenomegalia palpabile.
+        </p>
+        <p style="margin-bottom:10px">
+          Fino ad oggi in <strong>watch &amp; wait</strong>. All'ultima rivalutazione: Hb 10.4 g/dL (calo di 1.8 g in 4 mesi), linfociti 48.200/μL, splenomegalia ecografica 16 cm. Molecolarmente: <strong>UM-IGHV, del(11q)</strong>, TP53 wild-type, del(17p) negativo.
+        </p>
+        <p>
+          CIRS-G 8: ipertensione arteriosa grado 1 in terapia con amlodipina, dislipidemia in terapia dietetica. GFR 72. Nessuna storia di aritmie. Paziente attivo, buona performance status (ECOG 1).
+        </p>
+        <div class="score-bar">
+          <span class="score-item ko">Anemia progressiva</span>
+          <span class="score-item ko">Splenomegalia sintomatica</span>
+          <span class="score-item warn">UM-IGHV + del(11q)</span>
+          <span class="score-item info">Paziente naïve</span>
+          <span class="score-item ok">TP53 wild-type</span>
+        </div>
+      </div>
+
+      <div class="msg system" id="step-question">
+        <div class="msg-header">❓ Step 1 — Indicazione al trattamento</div>
+        <p style="margin-bottom:10px">Giuseppe soddisfa i criteri per l'inizio della terapia secondo le linee guida iwCLL 2023. Qual è la tua valutazione dell'urgenza e del timing terapeutico?</p>
+        <div class="quick-replies">
+          <span class="qr-chip" onclick="sendQuick(this.textContent)">Sì, criteri soddisfatti: anemia e splenomegalia indicano trattamento</span>
+          <span class="qr-chip" onclick="sendQuick(this.textContent)">Attendere ancora 4-6 settimane per confermare il trend</span>
+          <span class="qr-chip" onclick="sendQuick(this.textContent)">Rivalutare solo se Hb scende sotto 10 g/dL</span>
+          <span class="qr-chip" onclick="sendQuick(this.textContent)">Richiedere PET-TC prima di iniziare</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-hint">💬 Rispondi liberamente — descrivi il tuo ragionamento clinico</div>
+      <div class="input-row">
+        <textarea
+          id="userInput"
+          placeholder="Scrivi la tua valutazione o decisione clinica..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Invia">→</button>
+      </div>
+    </div>
+
+    <div class="sources-footer">
+      <span>📚</span>
+      <a href="https://doi.org/10.1182/blood.2024024476" target="_blank">ELEVATE-TN 6y · Blood 2025</a>
+      <a href="https://doi.org/10.1093/jnci/djae245" target="_blank">NMA JNCI 2025</a>
+      <a href="https://doi.org/10.1007/s00277-025-06498-5" target="_blank">NAOS · Ann Hematol 2025</a>
+      <a href="https://doi.org/10.3390/biom16010123" target="_blank">Duminuco · Biomolecules 2026</a>
+      <a href="https://doi.org/10.1080/14796694.2025.2600913" target="_blank">Dingli · Future Oncol 2025</a>
+      <a href="https://doi.org/10.1016/j.clml.2024.05.019" target="_blank">Woyach · Clin Lymphoma 2024</a>
+      <span style="margin-left:auto">ECM Simulator v3 · 2026</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `Sei un tutor clinico esperto in ematologia, specializzato nella LLC e negli inibitori di BTK di seconda generazione.
+
+CASO CLINICO:
+Paziente: Giuseppe F., 69 anni, maschio, pensionato, Bergamo.
+Diagnosi: LLC B, Rai stadio II. Primo trattamento (naïve).
+Citogenetica: UM-IGHV (non mutato), del(11q) positivo, TP53 wild-type, del(17p) negativo.
+Sintomi attuali: Hb 10.4 g/dL (calo 1.8 g in 4 mesi), linfociti 48.200/μL, splenomegalia eco 16 cm, β2-microglobulina 4.1 mg/L.
+Comorbidità: Ipertensione arteriosa grado 1 (amlodipina), dislipidemia dietetica. GFR 72. No FA pregressa. CIRS-G 8.
+ECOG 1. Paziente attivo e motivato.
+
+STEP CORRENTE: {STEP}
+
+EVIDENZE CHIAVE 2025-2026 su cui basare OGNI feedback:
+
+1. ELEVATE-TN 6 anni follow-up (Sharman JP et al., Blood 2025; doi:10.1182/blood.2024024476):
+   - Studio fase 3 randomizzato, 142 centri, 18 paesi. Pazienti naïve ≥65 anni o con comorbidità.
+   - Bracci: A) Acalabrutinib + obinutuzumab; B) Acalabrutinib monoterapia; C) Clorambucile + obinutuzumab.
+   - A 6 anni: PFS mediana non raggiunta nel braccio A vs 22.8 mesi nel braccio C (HR 0.14).
+   - OS significativamente superiore con acalabrutinib+obi vs chemioimmuno (HR 0.65, p=0.019).
+   - Risultati mantenuti nei pazienti con UM-IGHV e del(11q).
+   - Analisi post-hoc: acalabrutinib+obi migliore PFS vs acalabrutinib in monoterapia.
+
+2. Network Meta-Analysis (Wen T et al., J Natl Cancer Inst 2025; doi:10.1093/jnci/djae245):
+   - 30 trial, 12.818 pazienti, 30 trattamenti diversi confrontati.
+   - Acalabrutinib ha PFS superiore a ibrutinib nei pazienti >65 anni o con UM-IGHV.
+   - Nei pazienti giovani con comorbidità: acalabrutinib+obi superiore a ibrutinib+obi, ibrutinib+ven e ven+obi.
+   - Nei pazienti anziani con comorbidità: acalabrutinib e acalabrutinib+obi superiori a ven+obi.
+
+3. Studio NAOS real-world (Quinquenel A et al., Ann Hematol 2025; doi:10.1007/s00277-025-06498-5):
+   - 485 pazienti reali (59 centri France), età mediana 73 anni (L1) — più anziani e comorbidi dei trial.
+   - rwPFS a 12 mesi: 93.1% in prima linea, 87.0% in seconda linea.
+   - No differenza significativa per del17p/TP53m (p=0.21) o stato IGHV (p=0.34).
+   - Cardiopatie in solo 2.1% dei pazienti. AE gr 3/4 in 9.6%.
+
+4. Real-world eventi cardiaci (Dingli D et al., Future Oncol 2025; doi:10.1080/14796694.2025.2600913):
+   - 2163 pazienti in pratica clinica (81.4% prima linea).
+   - Incidenza FA a 12 mesi: 83% CVAE-free con acalabrutinib vs 72% con ibrutinib.
+   - FA e ipertensione: incidenza 2-3 volte minore con acalabrutinib vs ibrutinib.
+
+5. Review BTKi 2026 (Duminuco A et al., Biomolecules 2026; doi:10.3390/biom16010123):
+   - Acalabrutinib: maggiore selettività BTK rispetto a ibrutinib, minore inibizione off-target (ITK, EGFR, TEC).
+   - Zanubrutinib come alternativa; pirtobrutinib (non-covalente) per resistenze C481.
+   - Resistenza ai covalenti: mutazioni BTK C481 e PLCG2.
+
+6. Linee guida iwCLL 2023:
+   - Criteri di trattamento: Hb <10 g/dL o calo >2 g/4 mesi, PLT <100.000, sintomi sistemici, splenomegalia sintomatica ≥6 cm oltre costa.
+   - Prima linea nei pazienti con UM-IGHV/del(11q): BTKi (acalabrutinib, zanubrutinib) o ven+obi.
+   - In pazienti con comorbidità cardiovascolari: preferire acalabrutinib o zanubrutinib su ibrutinib.
+   - Acalabrutinib: 100 mg BID, continuo fino a progressione o tossicità.
+   - Obinutuzumab (se aggiunto): 1000 mg e.v., cicli 1-6, poi sospeso (acalabrutinib continua).
+
+7. ARISE Study (NCT06205498) - Studio osservazionale italiano in corso:
+   - Dati real-world italiani su acalabrutinib avviati 2021-2022, follow-up fino a 5 anni.
+   - Conferma dati europei su efficacia e tollerabilità nella pratica quotidiana italiana.
+
+ISTRUZIONI PER IL FEEDBACK:
+- Valuta la risposta del clinico in modo costruttivo, specifico e formativo.
+- Se corretta: valida con i dati numerici specifici degli studi (HR, PFS%, ecc.).
+- Se parzialmente corretta: valida la parte giusta, integra con l'evidenza mancante.
+- Se errata: spiega il razionale clinico con gentilezza, cita lo studio pertinente.
+- Ogni feedback DEVE citare almeno uno studio 2024-2026 con il dato numerico specifico.
+- Usa sempre il nome "Giuseppe" per contestualizzare.
+- Suggerisci sempre il passo clinico successivo nel percorso.
+- Rispondi SEMPRE in italiano. Max 220 parole.
+- Tono: tutor esperto, non giudicante, rigoroso ma accessibile.`;
+
+const STEP_QUESTIONS = {
+  1: {
+    title: "Step 1 — Indicazione al trattamento",
+    question: "Giuseppe soddisfa i criteri per l'inizio della terapia secondo le linee guida iwCLL 2023. Qual è la tua valutazione dell'urgenza e del timing terapeutico?",
+    chips: [
+      "Sì, criteri soddisfatti: anemia e splenomegalia indicano trattamento",
+      "Attendere ancora 4-6 settimane per confermare il trend",
+      "Rivalutare solo se Hb scende sotto 10 g/dL",
+      "Richiedere PET-TC prima di iniziare"
+    ]
+  },
+  2: {
+    title: "Step 2 — Scelta del regime terapeutico",
+    question: "Giuseppe è naïve al trattamento, 69 anni, UM-IGHV, del(11q)+, comorbidità cardiovascolari lievi (HTA gr.1). Quale regime di prima linea preferisci?",
+    chips: [
+      "Acalabrutinib 100 mg BID (monoterapia continua)",
+      "Acalabrutinib + obinutuzumab",
+      "Venetoclax + obinutuzumab (tempo fisso 12 mesi)",
+      "Ibrutinib monoterapia 420 mg/die",
+      "FC-R (fludarabina + ciclofosfamide + rituximab)"
+    ]
+  },
+  3: {
+    title: "Step 3 — Acalabrutinib ± Obinutuzumab",
+    question: "Hai scelto acalabrutinib. Come gestisci la decisione di aggiungere o meno obinutuzumab per Giuseppe, e perché?",
+    chips: [
+      "Aggiunto obinutuzumab: dati ELEVATE-TN 6y mostrano beneficio di PFS e OS",
+      "Monoterapia acalabrutinib: meno infusioni, profilo simile a lungo termine",
+      "Aggiunto obi solo perché del(11q) positivo",
+      "Non aggiungo obi per il rischio di reazioni infusionali con HTA"
+    ]
+  },
+  4: {
+    title: "Step 4 — Gestione early toxicity",
+    question: "A 4 settimane dall'inizio di acalabrutinib + obinutuzumab, Giuseppe riferisce cefalea moderata (NCI gr.1) e frequenti ecchimosi ai gomiti. Come gestisci questi eventi avversi?",
+    chips: [
+      "Cefalea: paracetamolo al bisogno, tipica ed autolimitante con acalabrutinib",
+      "Ecchimosi: sospendo il farmaco per rischio emorragico",
+      "Riduco la dose di acalabrutinib a 100 mg OD",
+      "Valuto assunzione di FANS o antiaggreganti concomitanti"
+    ]
+  },
+  5: {
+    title: "Step 5 — Valutazione risposta a 6 mesi",
+    question: "A 6 mesi: Hb 12.8 g/dL, linfociti 3.200/μL, milza non palpabile. ECO: splenomegalia risolta. Obinutuzumab completato. Come valuti la risposta e cosa pianifichi?",
+    chips: [
+      "Risposta completa: proseguo acalabrutinib in monoterapia indefinitamente",
+      "Risposta parziale: valuto aggiunta di venetoclax",
+      "Ottime risposte con UM-IGHV: mi aspetto risposta duratura ma continuo a monitorare",
+      "Interrompo acalabrutinib: risposta ottimale raggiunta"
+    ]
+  }
+};
+
+let currentStep = 1;
+let conversationHistory = [];
+let isLoading = false;
+
+function setStep(n, btn) {
+  currentStep = n;
+  document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const q = STEP_QUESTIONS[n];
+  const chatArea = document.getElementById('chatArea');
+
+  const stepMsg = document.createElement('div');
+  stepMsg.className = 'msg system';
+  stepMsg.innerHTML = `
+    <div class="msg-header">📋 ${q.title}</div>
+    <p style="margin-bottom:10px">${q.question}</p>
+    <div class="quick-replies">
+      ${q.chips.map(c => `<span class="qr-chip" onclick="sendQuick(this.textContent)">${c}</span>`).join('')}
+    </div>
+  `;
+  chatArea.appendChild(stepMsg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function sendQuick(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  const chatArea = document.getElementById('chatArea');
+
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  userMsg.textContent = text;
+  chatArea.appendChild(userMsg);
+
+  const typingMsg = document.createElement('div');
+  typingMsg.className = 'msg ai';
+  typingMsg.innerHTML = `
+    <div class="ai-label">Tutor Clinico AI</div>
+    <span class="typing-dot"></span>
+    <span class="typing-dot"></span>
+    <span class="typing-dot"></span>
+  `;
+  chatArea.appendChild(typingMsg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+
+  conversationHistory.push({ role: 'user', content: text });
+
+  try {
+    const systemPrompt = SYSTEM_PROMPT.replace('{STEP}', `Step ${currentStep} — ${STEP_QUESTIONS[currentStep].title}`);
+
+    const response = await fetch('https://royal-surf-aa27.matteo-depetris61.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: conversationHistory
+      })
+    });
+
+    const data = await response.json();
+    const aiText = data.content?.[0]?.text || 'Errore nella risposta AI.';
+
+    conversationHistory.push({ role: 'assistant', content: aiText });
+
+    typingMsg.innerHTML = `
+      <div class="ai-label">Tutor Clinico AI</div>
+      <div>${formatAIResponse(aiText)}</div>
+    `;
+
+    if (currentStep < 5) {
+      document.getElementById(`step${currentStep}-btn`).classList.add('done');
+      document.getElementById(`step${currentStep}-btn`).classList.remove('active');
+      const advanceHint = document.createElement('div');
+      advanceHint.style.cssText = 'text-align:center;margin:6px 0';
+      advanceHint.innerHTML = `<span class="qr-chip" style="background:var(--navy-light);color:var(--navy);font-weight:600" onclick="setStep(${currentStep+1}, document.getElementById('step${currentStep+1}-btn'))">Procedi allo Step ${currentStep+1} →</span>`;
+      chatArea.appendChild(advanceHint);
+    } else {
+      const finalMsg = document.createElement('div');
+      finalMsg.className = 'msg system';
+      finalMsg.innerHTML = `
+        <div class="msg-header">🏁 Simulazione completata</div>
+        <p style="margin-bottom:10px">Hai completato i 5 step del percorso clinico di Giuseppe. Hai navigato la scelta terapeutica first-line nella LLC con evidenze aggiornate al 2026.</p>
+        <div class="score-bar">
+          <span class="score-item ok">Indicazione corretta</span>
+          <span class="score-item ok">Scelta evidence-based</span>
+          <span class="score-item ok">Gestione tossicità</span>
+          <span class="score-item ok">Follow-up pianificato</span>
+        </div>
+      `;
+      chatArea.appendChild(finalMsg);
+    }
+
+  } catch (err) {
+    typingMsg.innerHTML = `
+      <div class="ai-label">Tutor Clinico AI</div>
+      <div class="feedback-wrong">Errore di connessione all'API. Verificare la disponibilità del Worker Cloudflare.</div>
+    `;
+  }
+
+  chatArea.scrollTop = chatArea.scrollHeight;
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function formatAIResponse(text) {
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  const keywords = [
+    'ELEVATE-TN', 'ASCEND', 'ELEVATE-RR', 'NAOS', 'NMA', 'ARISE',
+    'acalabrutinib', 'ibrutinib', 'zanubrutinib', 'obinutuzumab', 'venetoclax',
+    'UM-IGHV', 'del\\(11q\\)', 'del\\(17p\\)', 'TP53', 'BTKi',
+    'iwCLL', 'EHA', 'ASCO', 'pirtobrutinib'
+  ];
+  keywords.forEach(kw => {
+    const re = new RegExp(`\\b(${kw})\\b`, 'g');
+    text = text.replace(re, `<span class="evidence-pill">$1</span>`);
+  });
+
+  text = text.replace(/✅([^\n]*)/g, '<div class="feedback-correct">✅$1</div>');
+  text = text.replace(/⚠️([^\n]*)/g, '<div class="feedback-partial">⚠️$1</div>');
+  text = text.replace(/❌([^\n]*)/g, '<div class="feedback-wrong">❌$1</div>');
+
+  if (/ELEVATE|NAOS|NMA|iwCLL|Blood 2025|JNCI/i.test(text)) {
+    text += `<div class="guideline-ref" style="margin-top:10px">
+      <strong>📚 Fonti principali:</strong> Sharman JP · Blood 2025 (ELEVATE-TN 6y) · Wen T · JNCI 2025 (NMA) · Quinquenel A · Ann Hematol 2025 (NAOS) · Duminuco A · Biomolecules 2026
+    </div>`;
+  }
+
+  return `<p style="line-height:1.75">${text}</p>`;
+}
+</script>
+
+</body>
+</html>
